@@ -18,7 +18,6 @@ int main(){
 
 
 	 srand ( time(NULL) );
-
         /* allocate memory to the pointers of Skip List */
 	slst1=(struct skipList *)malloc(sizeof(struct skipList));
         slst2=(struct skipList *)malloc(sizeof(struct skipList));
@@ -182,10 +181,9 @@ void initSkipList (struct skipList *slst)
  param: e -- element to be checked
  pre:	slst is not null
  post: returns true or false  */
-int containsSkipList(struct skipList *slst, TYPE e)
+int containsSkipList(struct skipList *slst, TYPE e)/* FIXME */
 {
 
-/* FIX ME */
 
 }
 
@@ -195,10 +193,26 @@ int containsSkipList(struct skipList *slst, TYPE e)
  param: e -- element to be removed
  pre:	slst is not null
  post: the new element is removed from all internal sorted lists */
-void removeSkipList(struct skipList *slst, TYPE e)
+void removeSkipList(struct skipList *slst, TYPE e)/* FIXME */
 {
+	assert(slst != NULL);
+	int maxLevel = getHight(slst->topSentinel);
 
-/* FIX ME */
+	struct skipLink *curLevel = slst->topSentinel;
+	struct skipLink *cur = curLevel;
+	struct skipLink *last = curLevel;
+	for (maxLevel; maxLevel > 0; maxLevel--) {
+		while (cur != e && cur != NULL) {
+			last = cur;
+			cur = cur->next;
+		}
+		if(cur != NULL){/*If cur == NULL then there are no nodes of e in this layer*/
+
+		}
+		cur = curLevel->down;
+		curLevel = cur;
+	}
+
 
 }
 
@@ -240,8 +254,9 @@ struct skipLink* getLinkAtLevel(struct skipLink *cur,int lvl){
 	param: e -- element to be added
 	pre:	slst is not null
 	post:	the new element is added to the lowest list and randomly to higher-level lists */
-void addSkipList(struct skipList *slst, TYPE e)
+void addSkipList(struct skipList *slst, TYPE e)/* FIXME  ------------------------------------ Done!*/
 {
+	assert(slst != NULL);
 	int level = getLevel();/*Get the level of where we are going to insert*/
 	int maxLevel = getHight(slst->topSentinel);
 	int startLevel = maxLevel - level;
@@ -262,7 +277,9 @@ void addSkipList(struct skipList *slst, TYPE e)
 	}
 
 
-	printf("%d & %d & %d\n", level,getHight(newNode),getHight(slst->topSentinel));
+
+	/*printf("%d & %d & %d\n", level,getHight(newNode),getHight(slst->topSentinel));*/
+
 
 	struct skipLink *startAtMe = getLinkAtLevel(slst->topSentinel,startLevel);
 	int layersToAdd = level;
@@ -275,9 +292,9 @@ void addSkipList(struct skipList *slst, TYPE e)
 		/*shift down*/
 		newNode = newNode->down;
 		startAtMe = startAtMe->down;
+		cur = startAtMe;
 	}
-
-
+	slst->size++;
 
 }
 
@@ -296,10 +313,20 @@ int sizeSkipList(struct skipList *slst){
 	param: slst -- pointer to the skip list
 	pre:	slst is not null and slst is not empty
 	post: the links in the skip list are printed breadth-first, top-down */
-void printSkipList(struct skipList *slst)
-{
-
-/* FIX ME*/
+void printSkipList(struct skipList *slst) {/* FIXME */
+	assert(slst != NULL && slst->size != 0);
+	int maxLevel = getHight(slst->topSentinel);
+	struct skipLink *curLevel = slst->topSentinel;
+	struct skipLink *cur = curLevel;
+	for (maxLevel; maxLevel > 0; maxLevel--) {
+		while (cur != NULL) {
+			printf("%d ", (int)cur->value);
+			cur = cur->next;
+		}
+		printf("\n");
+		cur = curLevel->down;
+		curLevel = cur;
+	}
 
 }
 
@@ -311,7 +338,7 @@ void printSkipList(struct skipList *slst)
  param: slst2 -- pointer to the skip list 2
  pre: slst1 and slst2 are not null, and skip list 1 and skip list 2 are not empty
  post: slst1 points to the merger,  slst2 is null*/
-void mergeSkipList(struct skipList *slst1, struct skipList *slst2)
+void mergeSkipList(struct skipList *slst1, struct skipList *slst2)/* FIXME */
 {
 
 
@@ -328,7 +355,7 @@ void mergeSkipList(struct skipList *slst1, struct skipList *slst2)
    param: slst2 -- pointer to the skip list 2
    pre: slst1 and slst2 are not null, and skip list 1 and skip list 2 are not empty
    post: slst1 points to the merger skip list*/
-void diffSkipList(struct skipList *slst1, struct skipList *slst2)
+void diffSkipList(struct skipList *slst1, struct skipList *slst2)/* FIXME */
 {
 
 
