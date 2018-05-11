@@ -10,41 +10,41 @@ Main Function for Testing
 /*
  param: no parameters
  pre:	no parameters
- post: prints out the contents of the skip list 
+ post: prints out the contents of the skip list
 */
 int main(){
 	int i,M;
 	struct skipList *slst1, *slst2;
-	
-	
+
+
 	 srand ( time(NULL) );
-	
+
         /* allocate memory to the pointers of Skip List */
-	slst1=(struct skipList *)malloc(sizeof(struct skipList));  
-        slst2=(struct skipList *)malloc(sizeof(struct skipList));  
+	slst1=(struct skipList *)malloc(sizeof(struct skipList));
+        slst2=(struct skipList *)malloc(sizeof(struct skipList));
 	assert(slst1); assert(slst2);
 
-	
+
 	/*  Initialize the two skip lists */
-	initSkipList(slst1); 
-        initSkipList(slst2);  
+	initSkipList(slst1);
+        initSkipList(slst2);
 
 	/*  Add to the skip list  M = 20 random integers in [0,100] */
 	M=20;
 	for(i=0;i<M;i++) addSkipList(slst1, rand()%101);
         for(i=0;i<M;i++) addSkipList(slst2, rand()%101);
-	
-	/*  Print out the skip list 
-            in the breadth-first order, starting from top. 
+
+	/*  Print out the skip list
+            in the breadth-first order, starting from top.
 	    In printing, move to a new printing line every time
             the end of the current level is reached.
-	    E.g., the print out of a skip list 
+	    E.g., the print out of a skip list
             with 5 elements should look like
-	 
+
 	    7
 	    7 14 29
 	    3 7 9 14 20
-	 
+
 	 */
 
 	printf("\nPrinting of Skip List 1 started ... \n");
@@ -55,15 +55,15 @@ int main(){
 	printSkipList(slst2);
 	printf("Printing of Skip List 2 finished. \n\n\n");
 
-     
 
-	
+
+
 	/* DIFFERENCE AND MERGING */
         printf("TESTING DIFFERENCE \n");
 	printf("Adding the same numbers to both skip lists \n");
 
 	for(i=200; i<=205; i++) {
-           addSkipList(slst1, i); 
+           addSkipList(slst1, i);
            addSkipList(slst2, i);
 	}
 
@@ -81,9 +81,9 @@ int main(){
 	printf("Printing of Skip List 1 after merging finished. \n\n\n");
 
 
-	
-	/* Develop test cases for evaluating your functions:  
-	         int containsSkipList(struct skipList *slst, TYPE e) 
+
+	/* Develop test cases for evaluating your functions:
+	         int containsSkipList(struct skipList *slst, TYPE e)
 	         int removeSkipList(struct skipList *slst, TYPE e)
 	 */
         printf("TESTING CONTAINS \n");
@@ -101,7 +101,7 @@ int main(){
 
 	for(i=200; i<=205; i++)
 	printf("\n%d %s in the list!.\n",i,containsSkipList(slst1, i)==1?"IS":"IS NOT");
-	
+
    return 0;
 
 }
@@ -117,7 +117,7 @@ Internal Functions
  post: output is a random intiger number in {0,1} */
 int flipSkipLink(void)
 {
-	return rand() % 2; 	
+	return rand() % 2;
 }
 
 /* Move to the right as long as the next element is smaller than the input value:
@@ -126,7 +126,7 @@ int flipSkipLink(void)
  pre:	current is not NULL
  post: returns one link before the link that contains the input value e */
 struct skipLink * slideRightSkipList(struct skipLink *current, TYPE e){
-	while ((current->next != 0) && LT(current->next->value, e))
+	while ((current->next != 0) && (e >= current->next->value))
 		current = current->next;
 	return current;
 }
@@ -168,7 +168,7 @@ Public Functions
  param:  slst -- pointer to the skip list
  pre:	slst is not null
  post: the sentinels are allocated, the pointers are set, and the list size equals zero */
-void initSkipList (struct skipList *slst) 
+void initSkipList (struct skipList *slst)
 {
 	slst->size=0;
 	slst->topSentinel=(struct skipLink * )malloc(sizeof(struct skipLink));
@@ -202,8 +202,38 @@ void removeSkipList(struct skipList *slst, TYPE e)
 
 }
 
+int getLevel(){
+	int i = 0;
+	while (flipSkipLink() != 1) {
+		i++;
+	}
+	return i;
+}
 
+int getHight(struct skipLink *cur){
+	int i = 0;
+	assert(cur != NULL);
+	while (cur->down != NULL) {
+		i++;
+		cur = cur->down;
+	}
+	return i;
+}
 
+struct skipLink* bottomLink(struct skipLink *cur){
+	while (cur->down != NULL) {
+		cur = cur->down;
+	}
+	return cur;
+}
+
+struct skipLink* getLinkAtLevel(struct skipLink *cur,int lvl){
+	while (lvl > 0) {
+		cur = cur->down;
+		lvl--;
+	}
+	return cur;
+}
 
 /* Add a new element to the skip list:
 	param: slst -- pointer to the skip list
@@ -212,8 +242,42 @@ void removeSkipList(struct skipList *slst, TYPE e)
 	post:	the new element is added to the lowest list and randomly to higher-level lists */
 void addSkipList(struct skipList *slst, TYPE e)
 {
+	int level = getLevel();/*Get the level of where we are going to insert*/
+	int maxLevel = getHight(slst->topSentinel);
+	int startLevel = maxLevel - level;
+	int i;
 
-/* FIX ME */
+
+	/*Initialize the node*/
+	struct skipLink *newNode = newSkipLink(e,NULL,NULL);
+	for (i = 0; i < level; i++) {
+		bottomLink(newNode)->down = newSkipLink(e,NULL,NULL);
+	}
+
+	/*insert into the array*/
+	if (maxLevel < level) {/*update the sentinel*/
+		for (i = level - maxLevel; i > 0; i--) {
+			slst->topSentinel = newSkipLink(0,NULL,slst->topSentinel);
+		}
+	}
+
+
+	printf("%d & %d & %d\n", level,getHight(newNode),getHight(slst->topSentinel));
+
+	struct skipLink *startAtMe = getLinkAtLevel(slst->topSentinel,startLevel);
+	int layersToAdd = level;
+	struct skipLink *cur = startAtMe;
+	for (layersToAdd; layersToAdd > 0; layersToAdd--) {
+		cur = slideRightSkipList(cur,newNode->value);
+		newNode->next = cur->next;
+		cur->next = newNode;
+
+		/*shift down*/
+		newNode = newNode->down;
+		startAtMe = startAtMe->down;
+	}
+
+
 
 }
 
@@ -222,9 +286,9 @@ void addSkipList(struct skipList *slst, TYPE e)
  pre:	slst is not null
  post: the number of elements */
 int sizeSkipList(struct skipList *slst){
-	
+
 	return slst->size;
-	
+
 }
 
 
@@ -240,8 +304,8 @@ void printSkipList(struct skipList *slst)
 }
 
 
-/* Merge two skip lists, by adding elements of skip list 2 to skip list 1 
- that are not already contained in skip list 1. 
+/* Merge two skip lists, by adding elements of skip list 2 to skip list 1
+ that are not already contained in skip list 1.
  The function should also remove the entire skip list 2 from the memory.
  param: slst1 -- pointer to the skip list 1
  param: slst2 -- pointer to the skip list 2
@@ -253,13 +317,13 @@ void mergeSkipList(struct skipList *slst1, struct skipList *slst2)
 
 /* FIX ME */
 
-		
+
 } /* end of the function */
-	
 
 
-/* Find a difference of two skip lists 
-   by removing elements of skip list 2 from skip list 1. 
+
+/* Find a difference of two skip lists
+   by removing elements of skip list 2 from skip list 1.
    param: slst1 -- pointer to the skip list 1
    param: slst2 -- pointer to the skip list 2
    pre: slst1 and slst2 are not null, and skip list 1 and skip list 2 are not empty
@@ -269,6 +333,6 @@ void diffSkipList(struct skipList *slst1, struct skipList *slst2)
 
 
 /* FIX ME */
-		
-	
+
+
 } /* end of the function */
