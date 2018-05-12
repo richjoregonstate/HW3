@@ -30,8 +30,13 @@ int main(){
 
 	/*  Add to the skip list  M = 20 random integers in [0,100] */
 	M=20;
-	for(i=0;i<M;i++) addSkipList(slst1, rand()%101);
-        for(i=0;i<M;i++) addSkipList(slst2, rand()%101);
+	for(i=0;i<M;i++){
+		addSkipList(slst1, rand()%101+1);
+	}
+	printf("\n");
+  for(i=0;i<M;i++){
+		addSkipList(slst2, rand()%101+1);
+	}
 
 	/*  Print out the skip list
             in the breadth-first order, starting from top.
@@ -59,7 +64,7 @@ int main(){
 
 	/* DIFFERENCE AND MERGING */
         printf("TESTING DIFFERENCE \n");
-	printf("Adding the same numbers to both skip lists \n");
+	printf("Adding the same numbers to both skip lists \n\n\n");
 
 	for(i=200; i<=205; i++) {
            addSkipList(slst1, i);
@@ -125,8 +130,10 @@ int flipSkipLink(void)
  pre:	current is not NULL
  post: returns one link before the link that contains the input value e */
 struct skipLink * slideRightSkipList(struct skipLink *current, TYPE e){
-	while ((current->next != 0) && (e >= current->next->value))
+	while ((current->next != 0) && (e >= current->next->value)){
 		current = current->next;
+	}
+
 	return current;
 }
 
@@ -183,8 +190,24 @@ void initSkipList (struct skipList *slst)
  post: returns true or false  */
 int containsSkipList(struct skipList *slst, TYPE e)/* FIXME */
 {
-
-
+	struct skipLink *cur = slst->topSentinel;
+	while (cur != NULL) {
+		if (cur->next == NULL) {
+			cur = cur->down;
+		}
+		else{
+			if (cur->next->value == e) {
+				return 1;
+			}
+			else if(cur->next->value < e){
+				cur = cur->next;
+			}
+			else{
+				cur = cur->down;
+			}
+		}
+	}
+	return 0;
 }
 
 
@@ -197,27 +220,31 @@ void removeSkipList(struct skipList *slst, TYPE e)/* FIXME */
 {
 	assert(slst != NULL);
 	int maxLevel = getHight(slst->topSentinel);
-
 	struct skipLink *curLevel = slst->topSentinel;
 	struct skipLink *cur = curLevel;
 	struct skipLink *last = curLevel;
-	for (maxLevel; maxLevel > 0; maxLevel--) {
-		while (cur != e && cur != NULL) {
+
+	for (maxLevel; maxLevel >= 0; maxLevel--) {
+		while (cur != NULL && cur->value != e) {
 			last = cur;
 			cur = cur->next;
 		}
-		if(cur != NULL){/*If cur == NULL then there are no nodes of e in this layer*/
-
+		if(cur != NULL && cur->value == e){/*If cur == NULL then there are no nodes of e in this layer*/
+			last->next = cur->next;/*Once we have found our node in the section then we just set the last to it's next*/
 		}
 		cur = curLevel->down;
 		curLevel = cur;
 	}
-
-
+	cur = slst->topSentinel;
+	while (cur->next == NULL) {
+		slst->topSentinel = cur->down;
+		cur = cur->down;
+	}
+	slst->size--;
 }
 
 int getLevel(){
-	int i = 0;
+	int i = 1;
 	while (flipSkipLink() != 1) {
 		i++;
 	}
@@ -226,7 +253,6 @@ int getLevel(){
 
 int getHight(struct skipLink *cur){
 	int i = 0;
-	assert(cur != NULL);
 	while (cur->down != NULL) {
 		i++;
 		cur = cur->down;
@@ -274,25 +300,24 @@ void addSkipList(struct skipList *slst, TYPE e)/* FIXME  -----------------------
 		for (i = level - maxLevel; i > 0; i--) {
 			slst->topSentinel = newSkipLink(0,NULL,slst->topSentinel);
 		}
+		maxLevel = level;
+		startLevel = maxLevel - level;
 	}
 
-
-
-	/*printf("%d & %d & %d\n", level,getHight(newNode),getHight(slst->topSentinel));*/
 
 
 	struct skipLink *startAtMe = getLinkAtLevel(slst->topSentinel,startLevel);
 	int layersToAdd = level;
 	struct skipLink *cur = startAtMe;
-	for (layersToAdd; layersToAdd > 0; layersToAdd--) {
-		cur = slideRightSkipList(cur,newNode->value);
+	/*printf("level:%d maxLevel:%d startLevel:%d layersToAdd:%d adding:%d\n",level,maxLevel,startLevel,layersToAdd,(int)e);*/
+	for (layersToAdd; layersToAdd >= 0; layersToAdd--) {
+		cur = slideRightSkipList(startAtMe,newNode->value);
 		newNode->next = cur->next;
 		cur->next = newNode;
 
 		/*shift down*/
 		newNode = newNode->down;
 		startAtMe = startAtMe->down;
-		cur = startAtMe;
 	}
 	slst->size++;
 
@@ -328,6 +353,7 @@ void printSkipList(struct skipList *slst) {/* FIXME */
 		curLevel = cur;
 	}
 
+	printf("Size: %d\n",slst->size);
 }
 
 
@@ -340,9 +366,14 @@ void printSkipList(struct skipList *slst) {/* FIXME */
  post: slst1 points to the merger,  slst2 is null*/
 void mergeSkipList(struct skipList *slst1, struct skipList *slst2)/* FIXME */
 {
+	struct skipLink *slst2Bottom = bottomLink(slst2->topSentinel)->next;
 
-
-/* FIX ME */
+	while (slst2Bottom != NULL) {/*For each node in slst1*/
+		if(containsSkipList(slst1,slst2Bottom->value)==0){
+			addSkipList(slst1,slst2Bottom->value);
+		}
+		slst2Bottom = slst2Bottom->next;
+	}
 
 
 } /* end of the function */
@@ -357,9 +388,20 @@ void mergeSkipList(struct skipList *slst1, struct skipList *slst2)/* FIXME */
    post: slst1 points to the merger skip list*/
 void diffSkipList(struct skipList *slst1, struct skipList *slst2)/* FIXME */
 {
+	struct skipLink *slst1Bottom = bottomLink(slst1->topSentinel)->next;
+	struct skipLink *slst2Bottom = bottomLink(slst2->topSentinel)->next;
+	struct skiplink *slstSaveMe = slst2Bottom;
 
-
-/* FIX ME */
+	while (slst1Bottom != NULL) {/*For each node in slst1*/
+		while (slst2Bottom != NULL) {/*Check for an equilvent node in slst2*/
+			if(slst2Bottom->value == slst1Bottom->value){
+				removeSkipList(slst1,slst2Bottom->value);
+			}
+			slst2Bottom = slst2Bottom->next;
+		}
+		slst1Bottom = slst1Bottom->next;
+		slst2Bottom = slstSaveMe;
+	}
 
 
 } /* end of the function */
